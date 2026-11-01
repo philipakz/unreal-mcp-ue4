@@ -59,7 +59,7 @@ export interface RegistrationContext {
 	sourceControlFileParam: (params: Record<string, any>) => string
 	sourceControlFilesCommand: (files: string[], singleOperation?: string, multiOperation?: string) => string
 	sourceControlPackageListParam: (params: Record<string, any>) => string[]
-	stringListSchema: z.ZodArray<z.ZodString, "many">
+	stringListSchema: z.ZodArray<z.ZodString>
 	textResponse: (text: string) => { content: Array<{ type: "text"; text: string }> }
 	toolDescription: (name: string) => string
 	toolNamespaceRegistry: Map<string, { description: string; supportedActions: string[] }>

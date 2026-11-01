@@ -323,7 +323,7 @@ export function registerCoreAssetActorNamespaces(ctx: RegistrationContext) {
 						...blueprintTargetNoNameShape,
 						...actorNameShape,
 						...vector3TransformShape,
-						properties: z.record(z.any()).optional(),
+						properties: z.record(z.string(), z.any()).optional(),
 					})
 					.strict(),
 				["blueprint_name", "asset_path"],

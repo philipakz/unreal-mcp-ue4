@@ -25,7 +25,7 @@ export const colorInputSchema = z.union([
 	z.tuple([z.number(), z.number(), z.number(), z.number()]),
 ])
 
-export const recordSchema = z.record(z.any())
+export const recordSchema = z.record(z.string(), z.any())
 export const stringListSchema = z.array(z.string().min(1)).min(1)
 
 export const worldBuildBaseSchema = {

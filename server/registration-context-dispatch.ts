@@ -100,8 +100,33 @@ export function createDispatchHelpers(options: DispatchHelperOptions) {
 
 		return paramsSchemas.length === 1
 			? paramsSchemas[0]
-			: z.union(paramsSchemas as [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]])
+			: z.union(paramsSchemas as [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]], {
+					error: `Params do not match the selected ${name} action`,
+				})
 	}
+
+	// A failed params union only reports a generic issue, so re-validate params against the
+	// requested action's schema and surface its specific issues (unknown keys, wrong types).
+	const isParamsUnionIssue = (issue: { code: string; path?: PropertyKey[] }) =>
+		issue.code === "invalid_union" && issue.path?.length === 1 && issue.path[0] === "params"
+
+	const addSelectedActionIssues =
+		(normalizedActions: Record<string, NamespaceActionDefinition>) =>
+		(input: { action?: unknown; params?: unknown }, ctx: z.RefinementCtx) => {
+			if (typeof input?.action !== "string") {
+				return
+			}
+
+			const paramsSchema = normalizedActions[normalizeActionName(input.action)]?.paramsSchema
+			const parseResult = paramsSchema?.safeParse(input.params ?? {})
+			if (!parseResult || parseResult.success) {
+				return
+			}
+
+			for (const issue of parseResult.error.issues) {
+				ctx.addIssue({ code: "custom", message: issue.message, path: ["params", ...issue.path] })
+			}
+		}
 
 	const validateNamespaceParams = async (
 		name: string,
@@ -115,7 +140,7 @@ export function createDispatchHelpers(options: DispatchHelperOptions) {
 
 		const parseResult = await actionDefinition.paramsSchema.safeParseAsync(params)
 		if (parseResult.success) {
-			return { success: true as const, params: parseResult.data }
+			return { success: true as const, params: parseResult.data as Record<string, any> }
 		}
 
 		return {
@@ -162,6 +187,9 @@ export function createDispatchHelpers(options: DispatchHelperOptions) {
 					),
 			})
 			.strict()
+			.superRefine(addSelectedActionIssues(normalizedActions), {
+				when: (payload) => payload.issues.some(isParamsUnionIssue),
+			})
 
 		rawServerRegisterTool(
 			name,

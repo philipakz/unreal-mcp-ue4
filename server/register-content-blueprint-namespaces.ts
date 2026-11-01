@@ -59,7 +59,7 @@ export function registerContentBlueprintNamespaces(ctx: RegistrationContext) {
 								component_name: z.string().optional(),
 								name: z.string().optional(),
 								...vector3TransformShape,
-								component_properties: z.record(z.any()).optional(),
+								component_properties: z.record(z.string(), z.any()).optional(),
 								parent_component_name: z.string().optional(),
 							})
 							.strict(),
